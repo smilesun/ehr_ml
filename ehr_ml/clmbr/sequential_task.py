@@ -4,14 +4,14 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-import embedding_dot
+import embedding_dot   # c++ cuda extension
 
 
 class SequentialTask(nn.Module):
     """
-    This is paired with an encoder that outputs an encoding for each timestep.  
-    This is the output (and loss) module for that encoder.  An example of an 
-    encoder is PatientRNN in rnn_model.py.  
+    This is paired with an encoder that outputs an encoding for each timestep.
+    This is the output (and loss) module for that encoder.  An example of an
+    encoder is PatientRNN in rnn_model.py.
     """
 
     def __init__(self, config, info, weight, weight1):
@@ -39,6 +39,16 @@ class SequentialTask(nn.Module):
             non_text_expected_output1,
             seen_before1,
         ) = data
+
+        # self.timeline_model=PatientRNN(
+        # self.task_module = SequentialTask(
+        #     config,
+        #     info,
+        #     weight=self.timeline_model.input_code_embedding.weight,
+        #     weight1=self.timeline_model.input_code_embedding1.weight,
+        # )
+
+        # XS: patient embedding inner product with disease embedding.
 
         final = embedding_dot.embedding_dot(
             rnn_with_bias, self.output_code_weight, non_text_indices

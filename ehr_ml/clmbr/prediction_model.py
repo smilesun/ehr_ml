@@ -25,15 +25,15 @@ from torch.nn import functional as F
 
 class CLMBR(nn.Module):
     """
-    Encapsulates a model that can encode a timeline, and a module that 
-    defines some task.  Examples are PatientRNN and SequentialTask, 
+    Encapsulates a model that can encode a timeline, and a module that
+    defines some task.  Examples are PatientRNN and SequentialTask,
     respectively. These two parts are kept separate b/c for the most
     part we will be using the former as an encoder, and the SequentialTask
-    is simply some auxiliary task we are going to use to provide supervision. 
+    is simply some auxiliary task we are going to use to provide supervision.
     For our target tasks, we are using the results of compute_embedding
-    to run the former part without the auxiliary task machinery.  
-    Note that this class doesn't need to know a lot of details about 
-    codes vs terms, etc. 
+    to run the former part without the auxiliary task machinery.
+    Note that this class doesn't need to know a lot of details about
+    codes vs terms, etc.
     """
 
     def __init__(self, config, info, for_labeler=False):
@@ -165,20 +165,21 @@ class CLMBR(nn.Module):
     def unfreeze(self):
         for param in self.parameters():
             param.requires_grad = True
-    
+
     def compute_code_probabilities(self, extract_dir: str, representations: np.array) -> Mapping[int, np.array]:
         """
         Compute the code probabilities for a given representation.
         Output is in the form of log probabilities
         Keys are entries in the ontology dictionary
         """
+        # XS: see native/reader.h for the C++ implementation of the ontology reader
         ontology_reader = ontology.OntologyReader(os.path.join(extract_dir, 'ontology.db'))
 
         weight = self.timeline_model.input_code_embedding.weight
         weight1 = self.timeline_model.input_code_embedding1.weight
-        
+
         representations = torch.tensor(representations, device=weight.device, dtype=weight.dtype)
-        
+
         bias_tensor = torch.ones(
             representations.shape[0], 1, device=representations.device
         )
@@ -190,6 +191,7 @@ class CLMBR(nn.Module):
         smaller = rnn_with_bias[:, -small_size:]
 
         with torch.no_grad():
+            # XS: patient representation inner product with disease embedding
             probabilities = F.logsigmoid(F.linear(rnn_with_bias, weight)).cpu()
             probabilties1 = F.logsigmoid(F.linear(smaller, weight1)).cpu()
 
@@ -208,6 +210,8 @@ class CLMBR(nn.Module):
             parents = ontology_reader.get_all_parents(code)
             vals = [get_val(p) for p in parents]
             vals = [a for a in vals if a is not None]
+            # XS: result = {} as init, sub-disease
+            # multily likelihood for each sub-diease then log transform multiply to sum
             result[code] = sum(vals)
 
         return result

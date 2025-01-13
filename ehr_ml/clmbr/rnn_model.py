@@ -187,7 +187,7 @@ class Decoder(nn.Module):
 
         # -- Prepare masks
         slf_attn_mask_subseq = get_subsequent_mask(tgt_seq)
-        slf_attn_mask = slf_attn_mask_subseq.gt(0)
+        slf_attn_mask = slf_attn_mask_subseq.gt(0)  # greater than
 
         # -- Forward
         dec_output = tgt_seq
@@ -289,13 +289,36 @@ class PatientRNN(nn.Module):
         combined_with_day_information = torch.cat(items, dim=1,)
 
         codes_split_by_patient = [
-            combined_with_day_information.narrow(0, offset, length)
+            combined_with_day_information.narrow(0, offset, length)  # XS:select [offset, offset+length] along dim 0
             for offset, length in all_lengths
         ]
+
+    # >>> from torch.nn.utils.rnn import pack_sequence
+    # >>> a = torch.tensor([1, 2, 3])
+    # >>> b = torch.tensor([4, 5])
+    # >>> c = torch.tensor([6])
+    # >>> pack_sequence([a, b, c])
+    # PackedSequence(data=tensor([1, 4, 6, 2, 5, 3]), batch_sizes=tensor([3, 2, 1]), sorted_indices=None, unsorted_indices=None)
 
         packed_sequence = nn.utils.rnn.pack_sequence(codes_split_by_patient)
 
         if self.recurrent:
+			# >>> from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+			# >>> seq = torch.tensor([[1, 2, 0], [3, 0, 0], [4, 5, 6]])
+			# >>> lens = [2, 1, 3]
+			# >>> packed = pack_padded_sequence(seq, lens, batch_first=True, enforce_sorted=False)
+			# >>> packed
+			# PackedSequence(data=tensor([4, 1, 3, 5, 2, 6]), batch_sizes=tensor([3, 2, 1]),
+			# 			sorted_indices=tensor([2, 0, 1]), unsorted_indices=tensor([1, 2, 0]))
+			# >>> seq_unpacked, lens_unpacked = pad_packed_sequence(packed, batch_first=True)
+			# >>> seq_unpacked
+			# tensor([[1, 2, 0],
+			# 		[3, 0, 0],
+			# 		[4, 5, 6]])
+			# >>> lens_unpacked
+			# tensor([2, 1, 3])
+
+
             output, _ = self.model(packed_sequence)
 
             padded_output, _ = nn.utils.rnn.pad_packed_sequence(

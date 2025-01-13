@@ -14,9 +14,9 @@ import embedding_dot
 
 class DoctorAITask(nn.Module):
     """
-    This is paired with an encoder that outputs an encoding for each timestep.  
-    This is the output (and loss) module for that encoder.  An example of an 
-    encoder is PatientRNN in rnn_model.py.  
+    This is paired with an encoder that outputs an encoding for each timestep.
+    This is the output (and loss) module for that encoder.  An example of an
+    encoder is PatientRNN in rnn_model.py.
     """
 
     def __init__(self, config, data_config, info):
@@ -50,11 +50,21 @@ class DoctorAITask(nn.Module):
 
         non_text_output_weights, non_text_expected_output = data
         # We use the "boring" flat decoder
+        # >>> mat1 = torch.randn(2, 3)
+        # >>> mat2 = torch.randn(3, 3)
+        # >>> torch.mm(mat1, mat2)
+        # tensor([[ 0.4851,  0.5037, -0.3633],
+        #         [-0.0760, -3.6705,  2.4784]])
         intermediate = torch.mm(rnn_with_bias, self.output_code_weight.t())
         final = intermediate.view(rnn_output.shape[0], rnn_output.shape[1], -1)
 
         probabilities = nn.functional.softmax(final, dim=2)
+
+        # XS: Sigmoid replaced softmax, elementwise thought
         # probabilities = torch.sigmoid(final)
+
+        # weight (Tensor, optional): a manual rescaling weight
+        #         if provided it's repeated to match input tensor shape
 
         loss = nn.functional.binary_cross_entropy(
             probabilities,
@@ -73,7 +83,7 @@ class DoctorAITask(nn.Module):
         index = -1
         for day in patient.days:
             if info.get("use_terms") or len(day.observations) != 0:
-                index += 1
+                index += 1  # increase index for each day
 
             if mask_before is not None:
                 this_date = datetime.date(
@@ -83,7 +93,7 @@ class DoctorAITask(nn.Module):
                     continue
 
             if index >= 1:
-                positive_codes = set()
+                positive_codes = set()  # empty set
                 for code in day.observations:
                     if code in info["recorded_date_codes"]:
                         for subword in ontologies.get_subwords(code):
@@ -93,6 +103,7 @@ class DoctorAITask(nn.Module):
 
     @classmethod
     def compute_leaf_code_map(cls, data_config, info, ontologies):
+        # XS: ICD10 hierarchy
         children_map = ontologies.get_children_map()
         valid_codes_to_predict = set()
 
@@ -125,7 +136,7 @@ class DoctorAITask(nn.Module):
         cls, data_config, info, ontologies, patients, mask_before=None
     ):
         """
-        Name is confusing but this constructs _targets_ from next day codes and terms. 
+        Name is confusing but this constructs _targets_ from next day codes and terms.
         """
 
         maximum_length = max(
@@ -135,7 +146,7 @@ class DoctorAITask(nn.Module):
             )
             for x in patients
         )
-
+        # XS: torch.ByteTensor is deprecated, use torch.unit8 instead
         non_text_expected_output = torch.ByteTensor(
             len(patients), maximum_length, len(data_config["leaf_code_map"])
         ).fill_(0)
