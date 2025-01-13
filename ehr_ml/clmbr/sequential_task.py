@@ -64,6 +64,7 @@ class SequentialTask(nn.Module):
 
         final1 = embedding_dot.embedding_dot(
             rnn_with_bias[:, -small_size:].contiguous(),
+            # XS: THE other embedding
             self.output_code_weight1,
             non_text_indices1,
         )
@@ -72,6 +73,8 @@ class SequentialTask(nn.Module):
             final1, non_text_expected_output1, reduction="sum"
         )
 
+        # XS: loss is doctorAI the same loss
+        # XS: loss1 is the extra loss clmbr usinged
         return final, (loss + loss1)
 
     @classmethod
