@@ -207,6 +207,7 @@ class CLMBR(nn.Module):
                 return probabilties1[:, index - self.config['num_first']]
 
         for code in self.info['valid_code_map'].keys():
+            # XS: go over all diseases and get the likelihood?
             parents = ontology_reader.get_all_parents(code)
             vals = [get_val(p) for p in parents]
             vals = [a for a in vals if a is not None]

@@ -298,9 +298,11 @@ class PatientRNN(nn.Module):
     # >>> b = torch.tensor([4, 5])
     # >>> c = torch.tensor([6])
     # >>> pack_sequence([a, b, c])
-    # PackedSequence(data=tensor([1, 4, 6, 2, 5, 3]), batch_sizes=tensor([3, 2, 1]), sorted_indices=None, unsorted_indices=None)
+    # PackedSequence(data=tensor([1, 4, 6, 2, 5, 3]),
+    # batch_sizes=tensor([3, 2, 1]), sorted_indices=None, unsorted_indices=None)
 
-        packed_sequence = nn.utils.rnn.pack_sequence(codes_split_by_patient)
+        packed_sequence = nn.utils.rnn.pack_sequence(
+            codes_split_by_patient)
 
         if self.recurrent:
 			# >>> from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
