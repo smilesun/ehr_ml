@@ -288,6 +288,23 @@ class PatientRNN(nn.Module):
 
         combined_with_day_information = torch.cat(items, dim=1,)
 
+        # torch.split:
+        # Splits a tensor into chunks along a specified dimension6.
+        # Returns a tuple of tensors6.
+        # Can split into equal-sized chunks or unequal chunks based on the input parameters6.
+        # Syntax: torch.split(tensor, split_size_or_sections, dim=0)6.
+        # torch.narrow:
+        # Selects a subsection of a tensor along a specified dimension1.
+        # Returns a narrowed view without copying the underlying data1.
+        # Efficient for extracting specific sections of large tensors without additional memory allocations1.
+        # Syntax: torch.narrow(input, dim, start, length)1.
+        # Key differences:
+        # Purpose: split divides a tensor into multiple parts, while narrow extracts a specific section.
+        # Output: split returns multiple tensors, narrow returns a single tensor view.
+        # Memory: split creates new tensors, narrow creates a view without copying data.
+        # Flexibility: split can divide into multiple chunks, narrow selects a single contiguous section.
+        # In terms of performance, narrow can be faster when used inside a forward method compared to slicing3.
+
         codes_split_by_patient = [
             combined_with_day_information.narrow(0, offset, length)  # XS:select [offset, offset+length] along dim 0
             for offset, length in all_lengths
